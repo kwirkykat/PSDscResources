@@ -20,6 +20,45 @@ try
 {
     Describe 'WindowsOptionalFeatureSet Integration Tests' {
         BeforeAll {
+            
+            $ComponentBasedServicingKeys = (Get-ChildItem 'hklm:SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\').Name
+            if ($ComponentBasedServicingKeys)
+            {
+                $ComponentBasedServicing = $ComponentBasedServicingKeys.Split("\") -contains "RebootPending"
+            }
+            else
+            {
+                $ComponentBasedServicing = $false
+            }
+
+            $WindowsUpdateKeys = (Get-ChildItem 'hklm:SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\').Name
+            if ($WindowsUpdateKeys)
+            {
+                $WindowsUpdate = $WindowsUpdateKeys.Split("\") -contains "RebootRequired"
+            }
+            else
+            {
+                $WindowsUpdate = $false
+            }
+
+            if ($ComponentBasedServicing)
+            {
+                Write-Verbose -Message 'REBOOT PENDING FOR COMPONENT' -Verbose
+            }
+            else
+            {
+                Write-Verbose -Message 'NO REBOOT PENDING FOR COMPONENT' -Verbose
+            }
+
+            if ($WindowsUpdate)
+            {
+                Write-Verbose -Message 'REBOOT PENDING FOR WINDOWS UPDATE' -Verbose
+            }
+            else
+            {
+                Write-Verbose -Message 'NO REBOOT PENDING FOR WINDOWS UPDATE' -Verbose
+            }
+
             $script:confgurationFilePath = Join-Path -Path $PSScriptRoot -ChildPath 'WindowsOptionalFeatureSet.config.ps1'
 
             $script:enabledStates = @( 'Enabled', 'EnablePending' )
@@ -79,7 +118,7 @@ try
                     # May need to wait a moment for the correct state to populate
                     $millisecondsElapsed = 0
                     $startTime = Get-Date
-                    while (-not ($windowsOptionalFeature.State -in $script:disabledStates) -and $millisecondsElapsed -lt 3000)
+                    while (-not ($windowsOptionalFeature.State -in $script:disabledStates) -and $millisecondsElapsed -lt 10000)
                     {
                         $windowsOptionalFeature = Dism\Get-WindowsOptionalFeature -Online -FeatureName $windowsOptionalFeatureName
                         $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds
@@ -110,7 +149,7 @@ try
                 # May need to wait a moment for the correct state to populate
                 $millisecondsElapsed = 0
                 $startTime = Get-Date
-                while (-not ($windowsOptionalFeature.State -in $script:enabledStates) -and $millisecondsElapsed -lt 3000)
+                while (-not ($windowsOptionalFeature.State -in $script:enabledStates) -and $millisecondsElapsed -lt 10000)
                 {
                     $windowsOptionalFeature = Dism\Get-WindowsOptionalFeature -Online -FeatureName $windowsOptionalFeatureName
                     $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds
@@ -155,7 +194,7 @@ try
                     # May need to wait a moment for the correct state to populate
                     $millisecondsElapsed = 0
                     $startTime = Get-Date
-                    while (-not ($windowsOptionalFeature.State -in $script:enabledStates) -and $millisecondsElapsed -lt 3000)
+                    while (-not ($windowsOptionalFeature.State -in $script:enabledStates) -and $millisecondsElapsed -lt 10000)
                     {
                         $windowsOptionalFeature = Dism\Get-WindowsOptionalFeature -Online -FeatureName $windowsOptionalFeatureName
                         $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds
@@ -186,7 +225,7 @@ try
                 # May need to wait a moment for the correct state to populate
                 $millisecondsElapsed = 0
                 $startTime = Get-Date
-                while (-not ($windowsOptionalFeature.State -in $script:disabledStates) -and $millisecondsElapsed -lt 3000)
+                while (-not ($windowsOptionalFeature.State -in $script:disabledStates) -and $millisecondsElapsed -lt 10000)
                 {
                     $windowsOptionalFeature = Dism\Get-WindowsOptionalFeature -Online -FeatureName $windowsOptionalFeatureName
                     $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds

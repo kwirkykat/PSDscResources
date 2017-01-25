@@ -20,6 +20,45 @@ try
 {
     Describe 'WindowsFeatureSet Integration Tests' {
         BeforeAll {
+
+            $ComponentBasedServicingKeys = (Get-ChildItem 'hklm:SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\').Name
+            if ($ComponentBasedServicingKeys)
+            {
+                $ComponentBasedServicing = $ComponentBasedServicingKeys.Split("\") -contains "RebootPending"
+            }
+            else
+            {
+                $ComponentBasedServicing = $false
+            }
+
+            $WindowsUpdateKeys = (Get-ChildItem 'hklm:SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\').Name
+            if ($WindowsUpdateKeys)
+            {
+                $WindowsUpdate = $WindowsUpdateKeys.Split("\") -contains "RebootRequired"
+            }
+            else
+            {
+                $WindowsUpdate = $false
+            }
+
+            if ($ComponentBasedServicing)
+            {
+                Write-Verbose -Message 'REBOOT PENDING FOR COMPONENT' -Verbose
+            }
+            else
+            {
+                Write-Verbose -Message 'NO REBOOT PENDING FOR COMPONENT' -Verbose
+            }
+
+            if ($WindowsUpdate)
+            {
+                Write-Verbose -Message 'REBOOT PENDING FOR WINDOWS UPDATE' -Verbose
+            }
+            else
+            {
+                Write-Verbose -Message 'NO REBOOT PENDING FOR WINDOWS UPDATE' -Verbose
+            }
+
             $script:validFeatureNames = @( 'Telnet-Client', 'RSAT-File-Services' )
 
             $script:originalFeatures = @{}
@@ -68,12 +107,12 @@ try
                 if ($windowsFeature.Installed)
                 {
                     $null = Remove-WindowsFeature -Name $windowsFeatureName
-                    $windowsFeature = Get-WindowsFeature -FeatureName $windowsFeatureName
+                    $windowsFeature = Get-WindowsFeature -Name $windowsFeatureName
 
                     # May need to wait a moment for the correct state to populate
                     $millisecondsElapsed = 0
                     $startTime = Get-Date
-                    while ($windowsFeature.Installed -and $millisecondsElapsed -lt 3000)
+                    while ($windowsFeature.Installed -and $millisecondsElapsed -lt 120000)
                     {
                         $windowsFeature = Get-WindowsFeature -Name $windowsFeatureName
                         $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds
@@ -106,7 +145,7 @@ try
                     # May need to wait a moment for the correct state to populate
                     $millisecondsElapsed = 0
                     $startTime = Get-Date
-                    while (-not $windowsFeature.Installed -and $millisecondsElapsed -lt 3000)
+                    while (-not $windowsFeature.Installed -and $millisecondsElapsed -lt 120000)
                     {
                         $windowsFeature = Get-WindowsFeature -Name $windowsFeatureName
                         $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds
@@ -147,12 +186,12 @@ try
                 if (-not $windowsFeature.Installed)
                 {
                     $null = Add-WindowsFeature -Name $windowsFeatureName
-                    $windowsFeature = Get-WindowsFeature -FeatureName $windowsFeatureName
+                    $windowsFeature = Get-WindowsFeature -Name $windowsFeatureName
 
                     # May need to wait a moment for the correct state to populate
                     $millisecondsElapsed = 0
                     $startTime = Get-Date
-                    while (-not $windowsFeature.Installed -and $millisecondsElapsed -lt 3000)
+                    while (-not $windowsFeature.Installed -and $millisecondsElapsed -lt 120000)
                     {
                         $windowsFeature = Get-WindowsFeature -Name $windowsFeatureName
                         $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds
@@ -185,7 +224,7 @@ try
                     # May need to wait a moment for the correct state to populate
                     $millisecondsElapsed = 0
                     $startTime = Get-Date
-                    while ($windowsFeature.Installed -and $millisecondsElapsed -lt 3000)
+                    while ($windowsFeature.Installed -and $millisecondsElapsed -lt 120000)
                     {
                         $windowsFeature = Get-WindowsFeature -Name $windowsFeatureName
                         $millisecondsElapsed = ((Get-Date) - $startTime).TotalMilliseconds

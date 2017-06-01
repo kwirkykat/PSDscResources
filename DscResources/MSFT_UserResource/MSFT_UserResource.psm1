@@ -6,10 +6,18 @@ param ()
 $errorActionPreference = 'Stop'
 Set-StrictMode -Version 'Latest'
 
-Import-Module -Name (Join-Path -Path (Split-Path -Path $PSScriptRoot -Parent) `
-                               -ChildPath 'CommonResourceHelper.psm1')
+<#
+    Import CommonResourceHelper for:
+        Get-LocalizedData,
+        Test-IsNanoServer,
+        New-InvalidOperationException,
+        New-InvalidArgumentException
+#>
+$script:dscResourcesFolderFilePath = Split-Path $PSScriptRoot -Parent
+$script:commonResourceHelperFilePath = Join-Path -Path $script:dscResourcesFolderFilePath -ChildPath 'CommonResourceHelper.psm1'
+Import-Module -Name $script:commonResourceHelperFilePath
 
-# Localized messages for Write-Verbose statements in this resource
+# Localized messages for verbose and error statements in this resource
 $script:localizedData = Get-LocalizedData -ResourceName 'MSFT_UserResource'
 
 if (-not (Test-IsNanoServer))
@@ -131,6 +139,8 @@ function Set-TargetResource
         [Boolean]
         $PasswordChangeNotAllowed
     )
+
+    Write-Verbose -Message 'In Set-TargetResource'
 
     if (Test-IsNanoServer)
     {
@@ -370,8 +380,6 @@ function Set-TargetResourceOnFullSKU
         [Boolean]
         $PasswordChangeNotAllowed
     )
-
-    Set-StrictMode -Version Latest
 
     Write-Verbose -Message ($script:localizedData.ConfigurationStarted -f $UserName)
 
@@ -1390,18 +1398,20 @@ function Test-UserPasswordOnFullSku
         $Password
     )
 
-    $principalContext = New-Object `
-                -TypeName 'System.DirectoryServices.AccountManagement.PrincipalContext' `
-                -ArgumentList @( [System.DirectoryServices.AccountManagement.ContextType]::Machine )
+    $credentialsValid = $false
+
+    $principalContext = New-Object -TypeName 'System.DirectoryServices.AccountManagement.PrincipalContext' -ArgumentList @( [System.DirectoryServices.AccountManagement.ContextType]::Machine )
+
     try
     {
-        $credentailsValid = $principalContext.ValidateCredentials($UserName, $Password.GetNetworkCredential().Password)
-        return $credentailsValid
+        $credentialsValid = $principalContext.ValidateCredentials($UserName, $Password.GetNetworkCredential().Password)
     }
     finally
     {
         $principalContext.Dispose()
     }
+
+    return $credentialsValid
 }
 
 

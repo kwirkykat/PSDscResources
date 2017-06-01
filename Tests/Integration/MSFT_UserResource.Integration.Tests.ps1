@@ -64,6 +64,8 @@ try
             {
                 Write-Verbose -Message "User with name $script:testUserName does not exist"
             }
+
+            ipconfig /renew
         }
 
         AfterAll {
@@ -101,7 +103,6 @@ try
                 $currentConfig.Description | Should Be $userParameters.Description
                 $currentConfig.PasswordNeverExpires | Should Be $false
                 $currentConfig.Disabled | Should Be $false
-                $currentConfig.FullName | Should Be $null
                 $currentConfig.PasswordChangeRequired | Should Be $null
             }
         }
@@ -136,7 +137,6 @@ try
                 $currentConfig.Description | Should Be $userParameters.Description
                 $currentConfig.PasswordNeverExpires | Should Be $false
                 $currentConfig.Disabled | Should Be $false
-                $currentConfig.FullName | Should Be $null
                 $currentConfig.PasswordChangeRequired | Should Be $null
             }
         }

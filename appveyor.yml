@@ -29,7 +29,8 @@ build: false
 
 test_script:
     - ps: |
-        Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo
+        Invoke-Pester .\Tests\Integration\MSFT_UserResource.Integration.Tests.ps1
+        #Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo
 
 #---------------------------------#
 #      deployment configuration   #

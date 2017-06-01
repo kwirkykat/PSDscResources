@@ -1,9 +1,7 @@
-﻿
-# Integration Test Config Template Version 1.0.0
-param 
+﻿param 
 (
     [Parameter(Mandatory = $true)]
-    [System.String]
+    [String]
     $ConfigurationName
 )
         
@@ -12,17 +10,17 @@ Configuration $ConfigurationName
 {
     param 
     (        
-        [System.String]
+        [String]
         $UserName = 'Test UserName',
         
-        [System.String]
+        [String]
         $Description = 'Test Description',
         
-        [System.String]
+        [String]
         $FullName = 'Test Full Name',
         
         [ValidateSet('Present', 'Absent')]
-        [System.String]
+        [String]
         $Ensure = 'Present',
         
         [Parameter(Mandatory = $true)]
@@ -37,7 +35,6 @@ Configuration $ConfigurationName
     Import-DscResource -ModuleName 'PSDscResources'
     
     Node localhost {
-
         User UserResource1
         {
             UserName = $UserName

@@ -31,210 +31,179 @@ try
 
     $configFile = Join-Path -Path $PSScriptRoot -ChildPath 'MSFT_UserResource.config.ps1'
 
-    Describe 'UserResource Integration Tests' {
-        $script:configData = @{
+    Describe 'User Integration Tests' {
+        BeforeAll {
+            $VerbosePreference = 'Continue'
+            Write-Verbose -Message '----------START USER TESTS----------'
+
+            $script:configData = @{
             AllNodes = @(
-                @{
-                    NodeName = '*'
-                    PSDscAllowPlainTextPassword = $true
-                }
-                @{
-                    NodeName = 'localhost'
-                }
-            )
+                    @{
+                        NodeName = 'localhost'
+                        PSDscAllowPlainTextPassword = $true
+                    }
+                )
+            }
+
+            $script:testUserName = 'TestUserName12345'
+            $script:testPassword = 'StrongOne7.'
+            $script:testDescription = 'Test Description'
+            $script:newTestDescription = 'New Test Description'
+            $script:secureTestPassword = ConvertTo-SecureString $script:testPassword -AsPlainText -Force
+            $script:testCredential = New-Object PSCredential ($script:testUserName, $script:secureTestPassword) 
         }
 
-        $script:logPath = Join-Path -Path $TestDrive -ChildPath 'NewUser.log'
-            
-        $script:testUserName = 'TestUserName12345'
-        $script:testPassword = 'StrongOne7.'
-        $script:testDescription = 'Test Description'
-        $script:newTestDescription = 'New Test Description'
-        $script:secureTestPassword = ConvertTo-SecureString $script:testPassword -AsPlainText -Force
-        $script:testCredential = New-Object PSCredential ($script:testUserName, $script:secureTestPassword) 
+        BeforeEach {
+            $user = Get-LocalUser -Name $script:testUserName -ErrorAction 'SilentlyContinue'
+
+            if ($null -ne $user)
+            {
+                Write-Verbose -Message "User with name $script:testUserName exists with description $($user.Description)"
+            }
+            else
+            {
+                Write-Verbose -Message "User with name $script:testUserName does not exist"
+            }
+        }
+
+        AfterAll {
+            Write-Verbose -Message '----------END USER TESTS----------'
+            $VerbosePreference = 'SilentlyContinue'
+        }
 
         Context 'Should create a new user' {
             $configurationName = 'MSFT_User_NewUser'
             $configurationPath = Join-Path -Path $TestDrive -ChildPath $configurationName
 
-            try
-            {
-                It 'Should compile without throwing' {
-                    {
-                        . $configFile -ConfigurationName $configurationName
-                        & $configurationName -UserName $script:testUserName `
-                                             -Password $script:testCredential `
-                                             -Description $script:testDescription `
-                                             -OutputPath $configurationPath `
-                                             -ConfigurationData $script:configData `
-                                             -ErrorAction 'Stop'
-                        Start-DscConfiguration -Path $configurationPath -Wait -Force
-                    } | Should Not Throw
-                }
-                
-                It 'Should be able to call Get-DscConfiguration without throwing' {
-                    { Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
-                }
-                
-                It 'Should return the correct configuration' {
-                    $currentConfig = Get-DscConfiguration -ErrorAction 'Stop'
-                    $currentConfig.UserName | Should Be $script:testUserName
-                    $currentConfig.Ensure | Should Be 'Present'
-                    $currentConfig.Description | Should Be $script:testDescription
-                    $currentConfig.PasswordNeverExpires | Should Be $false
-                    $currentConfig.Disabled | Should Be $false
-                    $currentConfig.PasswordChangeRequired | Should Be $null
-                }
+            $userParameters = @{
+                UserName = $script:testUserName
+                Password = $script:testCredential
+                Description = $script:testDescription
+                Ensure = 'Present'
             }
-            finally
-            {
-                if (Test-Path -Path $script:logPath) {
-                    Remove-Item -Path $script:logPath -Recurse -Force
-                }
 
-                if (Test-Path -Path $configurationPath)
+            It 'Should compile and run configuration' {
                 {
-                    Remove-Item -Path $configurationPath -Recurse -Force
-                }
+                    . $configFile -ConfigurationName $configurationName
+                    & $configurationName @userParameters -OutputPath $configurationPath -ConfigurationData $script:configData -ErrorAction 'Stop'
+                    Start-DscConfiguration -Path $configurationPath -Wait -Force
+                } | Should Not Throw
+            }
+                
+            It 'Should be able to call Get-DscConfiguration without throwing' {
+                { $null = Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
+            }
+                
+            It 'Should return the correct configuration' {
+                $currentConfig = Get-DscConfiguration
+                $currentConfig.UserName | Should Be $userParameters.UserName
+                $currentConfig.Ensure | Should Be $userParameters.Ensure
+                $currentConfig.Description | Should Be $userParameters.Description
+                $currentConfig.PasswordNeverExpires | Should Be $false
+                $currentConfig.Disabled | Should Be $false
+                $currentConfig.FullName | Should Be $null
+                $currentConfig.PasswordChangeRequired | Should Be $null
             }
         }
         
         Context 'Should update Description of an existing user' {
             $configurationName = 'MSFT_User_UpdateUserDescription'
             $configurationPath = Join-Path -Path $TestDrive -ChildPath $configurationName
-            $newTestDescription = 'New Test Description'
 
-            try
-            {
-                It 'Should compile without throwing' {
-                    {
-                        . $configFile -ConfigurationName $configurationName
-                        & $configurationName -UserName $script:testUserName `
-                                             -Password $script:testCredential `
-                                             -Description $newTestDescription `
-                                             -OutputPath $configurationPath `
-                                             -ConfigurationData $script:configData `
-                                             -ErrorAction 'Stop'
-                        Start-DscConfiguration -Path $configurationPath -Wait -Force
-                    } | Should Not Throw
-                }
-
-                It 'Should be able to call Get-DscConfiguration without throwing' {
-                    { Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
-                }
-                
-                It 'Should return the correct configuration' {
-                    $currentConfig = Get-DscConfiguration -ErrorAction 'Stop'
-                    $currentConfig.UserName | Should Be $script:testUserName
-                    $currentConfig.Ensure | Should Be 'Present'
-                    $currentConfig.Description | Should Be $newTestDescription
-                    $currentConfig.PasswordNeverExpires | Should Be $false
-                    $currentConfig.Disabled | Should Be $false
-                    $currentConfig.PasswordChangeRequired | Should Be $null
-                }
+            $userParameters = @{
+                UserName = $script:testUserName
+                Password = $script:testCredential
+                Description = 'New Test Description'
+                Ensure = 'Present'
             }
-            finally
-            {
-                if (Test-Path -Path $script:logPath) {
-                    Remove-Item -Path $script:logPath -Recurse -Force
-                }
 
-                if (Test-Path -Path $configurationPath)
+            It 'Should compile and run configuration' {
                 {
-                    Remove-Item -Path $configurationPath -Recurse -Force
-                }
+                    . $configFile -ConfigurationName $configurationName
+                    & $configurationName @userParameters -OutputPath $configurationPath -ConfigurationData $script:configData -ErrorAction 'Stop'
+                    Start-DscConfiguration -Path $configurationPath -Wait -Force
+                } | Should Not Throw
+            }
+                
+            It 'Should be able to call Get-DscConfiguration without throwing' {
+                { $null = Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
+            }
+                
+            It 'Should return the correct configuration' {
+                $currentConfig = Get-DscConfiguration
+                $currentConfig.UserName | Should Be $userParameters.UserName
+                $currentConfig.Ensure | Should Be $userParameters.Ensure
+                $currentConfig.Description | Should Be $userParameters.Description
+                $currentConfig.PasswordNeverExpires | Should Be $false
+                $currentConfig.Disabled | Should Be $false
+                $currentConfig.FullName | Should Be $null
+                $currentConfig.PasswordChangeRequired | Should Be $null
             }
         }
 
-        Context 'Should update Description, FullName, and PasswordNeverExpires of an existing user' {
+        Context 'Should update Description, FullName, and PasswordNeverExpires properties of an existing user' {
             $configurationName = 'MSFT_User_UpdateUserPassword'
             $configurationPath = Join-Path -Path $TestDrive -ChildPath $configurationName
-            $newFullName = 'New Full Name'
 
-            try
-            {
-                It 'Should compile without throwing' {
-                    {
-                        . $configFile -ConfigurationName $configurationName
-                        & $configurationName -UserName $script:testUserName `
-                                             -Password $script:testCredential `
-                                             -Description $script:testDescription `
-                                             -FullName $newFullName `
-                                             -PasswordNeverExpires $true `
-                                             -OutputPath $configurationPath `
-                                             -ConfigurationData $script:configData `
-                                             -ErrorAction 'Stop'
-                        Start-DscConfiguration -Path $configurationPath -Wait -Force
-                    } | Should Not Throw
-                }
-
-                It 'Should be able to call Get-DscConfiguration without throwing' {
-                    { Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
-                }
-                
-                It 'Should return the correct configuration' {
-                    $currentConfig = Get-DscConfiguration -ErrorAction 'Stop'
-                    $currentConfig.UserName | Should Be $script:testUserName
-                    $currentConfig.Ensure | Should Be 'Present'
-                    $currentConfig.Description | Should Be $script:testDescription
-                    $currentConfig.FullName | Should Be $newFullName
-                    $currentConfig.PasswordNeverExpires | Should Be $true
-                    $currentConfig.Disabled | Should Be $false
-                    $currentConfig.PasswordChangeRequired | Should Be $null
-                }
+            $userParameters = @{
+                UserName = $script:testUserName
+                Password = $script:testCredential
+                Description = $script:testDescription
+                FullName = 'New Full Name'
+                PasswordNeverExpires = $true
+                Ensure = 'Present'
             }
-            finally
-            {
-                if (Test-Path -Path $script:logPath) {
-                    Remove-Item -Path $script:logPath -Recurse -Force
-                }
 
-                if (Test-Path -Path $configurationPath)
+            It 'Should compile and run configuration' {
                 {
-                    Remove-Item -Path $configurationPath -Recurse -Force
-                }
+                    . $configFile -ConfigurationName $configurationName
+                    & $configurationName @userParameters -OutputPath $configurationPath -ConfigurationData $script:configData -ErrorAction 'Stop'
+                    Start-DscConfiguration -Path $configurationPath -Wait -Force
+                } | Should Not Throw
+            }
+                
+            It 'Should be able to call Get-DscConfiguration without throwing' {
+                { $null = Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
+            }
+                
+            It 'Should return the correct configuration' {
+                $currentConfig = Get-DscConfiguration
+                $currentConfig.UserName | Should Be $userParameters.UserName
+                $currentConfig.Ensure | Should Be $userParameters.Ensure
+                $currentConfig.Description | Should Be $userParameters.Description
+                $currentConfig.PasswordNeverExpires | Should Be $userParameters.PasswordNeverExpires
+                $currentConfig.Disabled | Should Be $false
+                $currentConfig.FullName | Should Be $userParameters.FullName
+                $currentConfig.PasswordChangeRequired | Should Be $null
             }
         }
         
         Context 'Should delete an existing user' {
-            $configurationName = 'MSFT_User_DeleteUser'
+            $configurationName = 'MSFT_User_NewUser'
             $configurationPath = Join-Path -Path $TestDrive -ChildPath $configurationName
 
-            try
-            {
-                It 'Should compile without throwing' {
-                    {
-                        . $configFile -ConfigurationName $configurationName
-                        & $configurationName -UserName $script:testUserName `
-                                             -Password $script:testCredential `
-                                             -OutputPath $configurationPath `
-                                             -ConfigurationData $script:configData `
-                                             -Ensure 'Absent' `
-                                             -ErrorAction 'Stop'
-                        Start-DscConfiguration -Path $configurationPath -Wait -Force
-                    } | Should Not Throw
-                }
-
-                It 'Should be able to call Get-DscConfiguration without throwing' {
-                    { Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
-                }
-                
-                It 'Should return the correct configuration' {
-                    $currentConfig = Get-DscConfiguration -ErrorAction 'Stop'
-                    $currentConfig.UserName | Should Be $script:testUserName
-                    $currentConfig.Ensure | Should Be 'Absent'
-                }
+            $userParameters = @{
+                UserName = $script:testUserName
+                Password = $script:testCredential
+                Ensure = 'Absent'
             }
-            finally
-            {
-                if (Test-Path -Path $script:logPath) {
-                    Remove-Item -Path $script:logPath -Recurse -Force
-                }
 
-                if (Test-Path -Path $configurationPath)
+            It 'Should compile and run configuration' {
                 {
-                    Remove-Item -Path $configurationPath -Recurse -Force
-                }
+                    . $configFile -ConfigurationName $configurationName
+                    & $configurationName @userParameters -OutputPath $configurationPath -ConfigurationData $script:configData -ErrorAction 'Stop'
+                    Start-DscConfiguration -Path $configurationPath -Wait -Force
+                } | Should Not Throw
+            }
+                
+            It 'Should be able to call Get-DscConfiguration without throwing' {
+                { $null = Get-DscConfiguration -ErrorAction 'Stop' } | Should Not Throw
+            }
+                
+            It 'Should return the correct configuration' {
+                $currentConfig = Get-DscConfiguration
+                $currentConfig.UserName | Should Be $userParameters.UserName
+                $currentConfig.Ensure | Should Be $userParameters.Ensure
             }
         }
     }
@@ -243,5 +212,3 @@ finally
 {
     Exit-DscResourceTestEnvironment -TestEnvironment $script:testEnvironment
 }
-
-

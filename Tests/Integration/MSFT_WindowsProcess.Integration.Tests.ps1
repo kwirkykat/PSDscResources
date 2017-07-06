@@ -26,11 +26,20 @@ Describe 'WindowsProcess Integration Tests' {
         $script:configurationFilePathNoCredential = Join-Path -Path $PSScriptRoot -ChildPath 'MSFT_WindowsProcess_NoCredential.config.ps1'
         $script:configurationFilePathWithCredential = Join-Path -Path $PSScriptRoot -ChildPath 'MSFT_WindowsProcess_WithCredential.config.ps1' 
 
+        $script:secondsToWaitForProcess = 5 
+
         $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
+
+        # Wait a moment for the process to stop/start
+        $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
     }
 
     AfterAll {
         $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
+
+        # Wait a moment for the process to stop/start
+        $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
+
         $null = Exit-DscResourceTestEnvironment -TestEnvironment $script:testEnvironment
     }
 
@@ -39,14 +48,14 @@ Describe 'WindowsProcess Integration Tests' {
             $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $configurationName = 'StopStoppedProcess'
 
             $processParameters = @{
                 Path = $testProcessPath
                 Ensure = 'Absent'
-                Arguments = $logFilePath
+                Arguments = $script:logFilePath
             }
 
             It 'Should not be able to retrieve the process before configuration' {
@@ -54,7 +63,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should not be able to find the log file before configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $false
             }
 
@@ -67,7 +76,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
             
             It 'Should not be able to retrieve the process after configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Throw
@@ -85,7 +94,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should not be able to find the log file after configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $false
             }
         }
@@ -94,14 +103,14 @@ Describe 'WindowsProcess Integration Tests' {
             $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $configurationName = 'StartNewProcess'
 
             $processParameters = @{
                 Path = $testProcessPath
                 Ensure = 'Present'
-                Arguments = $logFilePath
+                Arguments = $script:logFilePath
             }
 
             It 'Should not be able to retrieve the process before configuration' {
@@ -109,7 +118,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should not be able to find the log file before configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $false
             }
 
@@ -122,7 +131,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
             
             It 'Should be able to retrieve the process after configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
@@ -141,7 +150,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should be able to find the log file after configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $true
             }
         }
@@ -150,27 +159,27 @@ Describe 'WindowsProcess Integration Tests' {
             $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $configurationName = 'StartRunningProcess'
 
             $processParameters = @{
                 Path = $testProcessPath
                 Ensure = 'Present'
-                Arguments = $logFilePath
+                Arguments = $script:logFilePath
             }
 
             $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             It 'Should be able to retrieve the process before configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
             }
 
             It 'Should be able to find the log file before configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $true
             }
 
@@ -183,7 +192,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
             
             It 'Should be able to retrieve the process after configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
@@ -202,7 +211,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should be able to find the log file after configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $true
             }
         }
@@ -211,27 +220,27 @@ Describe 'WindowsProcess Integration Tests' {
             $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $configurationName = 'StopRunningProcess'
 
             $processParameters = @{
                 Path = $testProcessPath
                 Ensure = 'Absent'
-                Arguments = $logFilePath
+                Arguments = $script:logFilePath
             }
 
             $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             It 'Should be able to retrieve the process before configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
             }
 
             It 'Should be able to find the log file before configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $true
             }
 
@@ -247,7 +256,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
             
             It 'Should not be able to retrieve the process after configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Throw
@@ -265,7 +274,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should not be able to find the log file after configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $false
             }
         }
@@ -274,14 +283,14 @@ Describe 'WindowsProcess Integration Tests' {
             $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $configurationName = 'GetMultipleProcesses'
 
             $processParameters = @{
                 Path = $testProcessPath
                 Ensure = 'Present'
-                Arguments = $logFilePath
+                Arguments = $script:logFilePath
             }
 
             It 'Should not be able to retrieve the process before configuration' {
@@ -289,7 +298,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should not be able to find the log file before configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $false
             }
 
@@ -302,12 +311,12 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the second process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
             
             It 'Should be able to retrieve the processes after configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
@@ -326,7 +335,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should be able to find the log file after configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $true
             }
         }
@@ -335,32 +344,32 @@ Describe 'WindowsProcess Integration Tests' {
             $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $configurationName = 'StopMultipleRunningProcesses'
 
             $processParameters = @{
                 Path = $testProcessPath
                 Ensure = 'Absent'
-                Arguments = $logFilePath
+                Arguments = $script:logFilePath
             }
 
             $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
             # Wait a moment for the second process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             It 'Should be able to retrieve the process before configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
             }
 
             It 'Should be able to find the log file before configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $true
             }
 
@@ -376,7 +385,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             # Wait a moment for the process to stop/start
-            $null = Start-Sleep -Seconds 1
+            $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
             It 'Should not be able to retrieve the processes after configuration' {
                 { $null = Get-Process -Name $script:testProcessName } | Should Throw
@@ -394,7 +403,7 @@ Describe 'WindowsProcess Integration Tests' {
             }
 
             It 'Should not be able to find the log file after configuration' {
-                $pathResult = Test-Path -Path $logFilePath
+                $pathResult = Test-Path -Path $script:logFilePath
                 $pathResult | Should Be $false
             }
         }
@@ -420,14 +429,14 @@ Describe 'WindowsProcess Integration Tests' {
                 $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $configurationName = 'StopStoppedProcess'
 
                 $processParameters = @{
                     Path = $testProcessPath
                     Ensure = 'Absent'
-                    Arguments = $logFilePath
+                    Arguments = $script:logFilePath
                     Credential = $script:testCredential
                 }
 
@@ -436,7 +445,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should not be able to find the log file before configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $false
                 }
 
@@ -449,7 +458,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
                 
                 It 'Should not be able to retrieve the process after configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Throw
@@ -467,7 +476,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should not be able to find the log file after configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $false
                 }
             }
@@ -476,14 +485,14 @@ Describe 'WindowsProcess Integration Tests' {
                 $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $configurationName = 'StartNewProcess'
 
                 $processParameters = @{
                     Path = $testProcessPath
                     Ensure = 'Present'
-                    Arguments = $logFilePath
+                    Arguments = $script:logFilePath
                     Credential = $script:testCredential
                 }
 
@@ -492,7 +501,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should not be able to find the log file before configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $false
                 }
 
@@ -505,7 +514,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
                 
                 It 'Should be able to retrieve the process after configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
@@ -524,7 +533,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should be able to find the log file after configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $true
                 }
             }
@@ -533,28 +542,28 @@ Describe 'WindowsProcess Integration Tests' {
                 $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $configurationName = 'StartRunningProcess'
 
                 $processParameters = @{
                     Path = $testProcessPath
                     Ensure = 'Present'
-                    Arguments = $logFilePath
+                    Arguments = $script:logFilePath
                     Credential = $script:testCredential
                 }
 
                 $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 It 'Should be able to retrieve the process before configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
                 }
 
                 It 'Should be able to find the log file before configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $true
                 }
 
@@ -567,7 +576,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
                 
                 It 'Should be able to retrieve the process after configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
@@ -586,7 +595,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should be able to find the log file after configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $true
                 }
             }
@@ -595,28 +604,28 @@ Describe 'WindowsProcess Integration Tests' {
                 $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $configurationName = 'StopRunningProcess'
 
                 $processParameters = @{
                     Path = $testProcessPath
                     Ensure = 'Absent'
-                    Arguments = $logFilePath
+                    Arguments = $script:logFilePath
                     Credential = $script:testCredential
                 }
 
                 $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 It 'Should be able to retrieve the process before configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
                 }
 
                 It 'Should be able to find the log file before configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $true
                 }
 
@@ -632,7 +641,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
                 
                 It 'Should not be able to retrieve the process after configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Throw
@@ -650,7 +659,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should not be able to find the log file after configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $false
                 }
             }
@@ -659,14 +668,14 @@ Describe 'WindowsProcess Integration Tests' {
                 $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $configurationName = 'GetMultipleProcesses'
 
                 $processParameters = @{
                     Path = $testProcessPath
                     Ensure = 'Present'
-                    Arguments = $logFilePath
+                    Arguments = $script:logFilePath
                     Credential = $script:testCredential
                 }
 
@@ -675,7 +684,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should not be able to find the log file before configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $false
                 }
 
@@ -688,12 +697,12 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the second process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
                 
                 It 'Should be able to retrieve the processes after configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
@@ -712,7 +721,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should be able to find the log file after configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $true
                 }
             }
@@ -721,33 +730,33 @@ Describe 'WindowsProcess Integration Tests' {
                 $null = Stop-Process -Name $script:testProcessName -Force -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $configurationName = 'StopMultipleRunningProcesses'
 
                 $processParameters = @{
                     Path = $testProcessPath
                     Ensure = 'Absent'
-                    Arguments = $logFilePath
+                    Arguments = $script:logFilePath
                     Credential = $script:testCredential
                 }
 
                 $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 $null = Start-Process -FilePath $processParameters.Path -ArgumentList $processParameters.Arguments -ErrorAction 'SilentlyContinue'
 
                 # Wait a moment for the second process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 It 'Should be able to retrieve the process before configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Not Throw
                 }
 
                 It 'Should be able to find the log file before configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $true
                 }
 
@@ -763,7 +772,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 # Wait a moment for the process to stop/start
-                $null = Start-Sleep -Seconds 1
+                $null = Start-Sleep -Seconds $script:secondsToWaitForProcess
 
                 It 'Should not be able to retrieve the processes after configuration' {
                     { $null = Get-Process -Name $script:testProcessName } | Should Throw
@@ -781,7 +790,7 @@ Describe 'WindowsProcess Integration Tests' {
                 }
 
                 It 'Should not be able to find the log file after configuration' {
-                    $pathResult = Test-Path -Path $logFilePath
+                    $pathResult = Test-Path -Path $script:logFilePath
                     $pathResult | Should Be $false
                 }
             }
